@@ -91,7 +91,7 @@ public class Robot extends SampleRobot {
 
 		if (pshoot) {
 			launchLeft.set(-1.0);
-			launchRight.set(1.0);
+			launchRight.set(1.0); //
 		} else if (suck) {
 			launchLeft.set(0.4);
 			launchRight.set(-0.4);
