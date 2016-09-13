@@ -26,6 +26,7 @@ public class Robot extends SampleRobot {
 	boolean revbutton = false, revstate = false; // bools associated with josh's ridiculous needs
 	boolean rampbutton = false, rampstate = false;
 	boolean driveStraight = false, automode = false;
+	double leftWheelSpeed = 0.0, rightWheelSpeed = 0.0;
 	
 	// constants
 	final double SPEED_INC = 0.02;
@@ -150,17 +151,17 @@ public class Robot extends SampleRobot {
 		}
 	}
 
-	public void RampSpeed(double leftjoy, double rightjoy, double l, double r)	//code for ramp speed.
+	public void RampSpeed(double leftjoy, double rightjoy)	//code for ramp speed.
 	{
 		if (leftjoy > l)
-			l += SPEED_INC;
+			leftWheelSpeed += SPEED_INC;
 		else if (leftjoy < l)
-			l -= SPEED_INC;
+			leftWheelSpeed -= SPEED_INC;
 
 		if (rightjoy > r)
-			r += SPEED_INC;
+			rightWheelSpeed += SPEED_INC;
 		else if (rightjoy < r)
-			r -= SPEED_INC;
+			rightWheelSpeed -= SPEED_INC;
 	}
 
 	public void PublishDash()	//publishes all values to the smartdashboard.
@@ -190,8 +191,8 @@ public class Robot extends SampleRobot {
 		double gyroangle = gyro.getAngle();	//sets variable gyroangle to the angle of the Gyro.
 		if (decswitch0.get()) {
 			if (robotimer.get() < 6.0) {	//for "6.0" seconds drive forward.
-				RampSpeed(0.0, 0.6, currleft, currright);
-				myDrive.drive(currright, -gyroangle * TURN_SCALING);
+				RampSpeed(0.0, 0.6);
+				myDrive.drive(rightWheelSpeed, -gyroangle * TURN_SCALING);
 				ballControl(false, false, false, false, false);
 			}
 			else {	//after time has elapsed stop moving forward.
@@ -216,7 +217,7 @@ public class Robot extends SampleRobot {
 		PublishDash();
 
 		// Below is code for the drive system
-		RampSpeed(driverControl.getRawAxis(1), driverControl.getRawAxis(3), currleft, currright);
+		RampSpeed(driverControl.getRawAxis(1), driverControl.getRawAxis(3));
 		if (driverControl.getRawButton(5)) {	//if button pressed for drive straight.
 			gyro.reset();
 			driveStraight = true; //sets drive straight to true.
@@ -243,9 +244,9 @@ public class Robot extends SampleRobot {
 			ramplatch.Toggle(driverControl.getRawButton(4), rampbutton, rampstate);
 			if (rampstate) {
 				if (revstate)
-					myDrive.tankDrive(currright, currleft);
+					myDrive.tankDrive(leftWheelSpeed, rightWheelSpeed);
 				else
-					myDrive.tankDrive(-currleft, -currright);
+					myDrive.tankDrive(-leftWheelSpeed, -rightWheelSpeed);
 			} else {
 				double speed = 0.8;
 				if (driverControl.getRawButton(6))
