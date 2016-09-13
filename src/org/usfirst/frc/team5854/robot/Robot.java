@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.smartdashboard.*;
 
 
 public class Robot extends SampleRobot {
+	
     RobotDrive myDrive;
     Joystick xboxController;
     VictorSP frontLeft, frontRight, rearLeft, rearRight, launchAngle, climbMotor, climbLock;
@@ -20,22 +21,20 @@ public class Robot extends SampleRobot {
 	Timer robotimer;
 	Latch ramplatch;
     
-    
+	// instance variables
 	double currleft = 0.0, currright = 0.0;
-	final double SPEED_INC = 0.02;
-	boolean revbutton = false, revstate = false; // bools associated with josh's ridiculous  needs
+	boolean revbutton = false, revstate = false; // bools associated with josh's ridiculous needs
 	boolean rampbutton = false, rampstate = false;
 	boolean driveStraight = false, automode = false;
-	boolean usesock = false;
+	
+	// constants
+	final double SPEED_INC = 0.02;
 	final double TURN_SCALING = 0.03f;
 	final double MIN_SHOOTER_ANGLE = -50.00; // minimum angle the shooter can go down
 	final double MAX_SHOOTER_ANGLE = 175.00; // maximum angle the shooter can go up
-	//char joybuff[sizeof(int)];
-	int conn_desc;
 	
-
+	// deafult constructor
     public Robot() {
-    	
     	launchAngle = new VictorSP(8); 
     	climbMotor = new VictorSP(6);
     	climbLock = new VictorSP(7); 
@@ -53,8 +52,6 @@ public class Robot extends SampleRobot {
 		revlatch = new Latch(); 
 		robotimer = new Timer();
 		ramplatch = new Latch();
-		
-		
     	frontLeft = new VictorSP(1); // drive motor
 		frontRight = new VictorSP(2); // drive motor
 		rearLeft = new VictorSP(3); // drive motor
@@ -66,14 +63,8 @@ public class Robot extends SampleRobot {
 		myDrive.setInvertedMotor(RobotDrive.MotorType.kRearRight, false);
 		myDrive.setExpiration(0.1);
     }
-    
-    public void robotInit() {
-    	SmartDashboard.putString("Robot Messages", "Entering RobotInit()");
-		gyro.reset();
-		SmartDashboard.putString("Robot Messages", "Gyro Reset");
-    }
 
-    double ShooterAngle()	//calculates the angle of the shooter.
+    double shooterAngle()	//calculates the angle of the shooter.
 	{
 		double y = (pot.getAverageVoltage() - 0.94) / 0.021;
 		y -= 9.995 - 7.954;
@@ -81,14 +72,23 @@ public class Robot extends SampleRobot {
 		System.out.print(y); 
 		return y;
 	}
-
-	void BallControl(double joy, boolean shoot, boolean suck, boolean up, boolean down, boolean pshoot) //controlls what happens to the ball.
+    
+    /**
+     * Controls the ball shooter mechanism
+     * @param shoot
+     * @param suck
+     * @param up
+     * @param down
+     * @param pshoot
+     */
+	public void ballControl(boolean shoot, boolean suck, boolean up, boolean down, boolean pshoot) //controlls what happens to the ball.
 	{
-		if (shoot)
+		if (shoot) {
 			launchLoader.setAngle(0);
-		else
+		}
+		else {
 			launchLoader.setAngle(50);
-
+		}
 		if (pshoot) {
 			launchLeft.set(-1.0);
 			launchRight.set(1.0); 
@@ -101,33 +101,32 @@ public class Robot extends SampleRobot {
 		}
 
 		if (down) {
-			if (ShooterAngle() >= MIN_SHOOTER_ANGLE)
+			if (shooterAngle() >= MIN_SHOOTER_ANGLE) {
 				launchAngle.set(-1.0);
-			else
+			}
+			else {
 				launchAngle.set(0.0);
+			}
 		}
 		else if (up) {
-			if (ShooterAngle() <= MAX_SHOOTER_ANGLE)
+			if (shooterAngle() <= MAX_SHOOTER_ANGLE) {
 				launchAngle.set(1.0);
-			else
+			}
+			else {
 				launchAngle.set(0.0);
+			}
 		}
-		else
+		else {
 			launchAngle.set(0.0);
-
-		joy *= 160;
-		joy += 160;
-		joy += 0.5;
-		SmartDashboard.putNumber("Pixel Cord", (int)joy);
-
-		double turnangle = 155.0 - (int)joy;
-		turnangle *= 0.166;
-		SmartDashboard.putNumber("Angle To Turn", (int)turnangle);
-		//System.out.printf(joybuff, sizeof(joybuff), "%d", 0);
-		//send(conn_desc, joybuff, sizeof(joybuff), 0);
+		}
 	}
 
-	void ClimbControl(boolean down, boolean up) //controlls the climbing system.
+	/**
+	 * Description: Method for controlling the robot's climbing system
+	 * @param down
+	 * @param up
+	 */
+	public void climbControl(boolean down, boolean up) //controls the climbing system.
 	{
 		if (down) {
 			if (!bLimit.get()) {
@@ -151,7 +150,7 @@ public class Robot extends SampleRobot {
 		}
 	}
 
-	void RampSpeed(double leftjoy, double rightjoy, double l, double r)	//code for ramp spped.
+	public void RampSpeed(double leftjoy, double rightjoy, double l, double r)	//code for ramp speed.
 	{
 		if (leftjoy > l)
 			l += SPEED_INC;
@@ -164,7 +163,7 @@ public class Robot extends SampleRobot {
 			r -= SPEED_INC;
 	}
 
-	void PublishDash()	//publishes all values to the smartdashboard.
+	public void PublishDash()	//publishes all values to the smartdashboard.
 	{
 		SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
 		SmartDashboard.putNumber("Pot Voltage", pot.getAverageVoltage());
@@ -173,8 +172,12 @@ public class Robot extends SampleRobot {
 		SmartDashboard.putBoolean("Ramp", rampstate);
 	}
 	
-	
-	
+    // called whenever the roboRIO boots
+    public void robotInit() {
+		gyro.reset();
+		climbControl(false, false);
+    }
+    
     public void autonomous() {
     	
     	SmartDashboard.putString("Robot Messages", "AutoInit()");
@@ -189,7 +192,7 @@ public class Robot extends SampleRobot {
 			if (robotimer.get() < 6.0) {	//for "6.0" seconds drive forward.
 				RampSpeed(0.0, 0.6, currleft, currright);
 				myDrive.drive(currright, -gyroangle * TURN_SCALING);
-				BallControl(0.0, false, false, false, false, false);
+				ballControl(false, false, false, false, false);
 			}
 			else {	//after time has elapsed stop moving forward.
 				myDrive.drive(0.0, 0.0);
@@ -197,18 +200,15 @@ public class Robot extends SampleRobot {
 		}
 		else {	//if the switch is in position 2 then do auto shot.
 			myDrive.drive(0.0, 0.0);	//do not drive forward.
-			if (ShooterAngle() > 55)	//set the shooter angle to 55 degrees.
-				BallControl(0.0, false, false, false, true, false);
+			if (shooterAngle() > 55)	//set the shooter angle to 55 degrees.
+				ballControl(false, false, false, true, false);
 			else	//once shooter equals 55 degrees, shoot the ball.
-				BallControl(0.0, false, false, false, false, true);
+				ballControl(false, false, false, false, true);
 				if (robotimer.get() > 7.0) 	//after 7 seconds from start of auto. the ball will shoot.
-					BallControl(0.0, true, false, false, false, true);
+					ballControl(true, false, false, false, true);
 		}
     }
 
-    /**
-     * Runs the motors with arcade steering.
-     */
     public void operatorControl() {
     	robotimer.reset();	//resets timer.
 		gyro.reset();		//resets gyro.
@@ -231,8 +231,8 @@ public class Robot extends SampleRobot {
 				myDrive.drive(-speed, -gyroangle * TURN_SCALING);
 
 				// non driving code
-				ClimbControl(driverControl.getRawButton(7), driverControl.getRawButton(8));
-				BallControl(shooterControl.getRawAxis(0), shooterControl.getRawButton(1), shooterControl.getRawButton(3),
+				climbControl(driverControl.getRawButton(7), driverControl.getRawButton(8));
+				ballControl(shooterControl.getRawButton(1), shooterControl.getRawButton(3),
 						shooterControl.getRawButton(6), shooterControl.getRawButton(5),
 						shooterControl.getRawButton(2));
 				driveStraight = driverControl.getRawButton(5); // keep this at the end
@@ -261,17 +261,14 @@ public class Robot extends SampleRobot {
 
 		}
 		// End of code for the drive system
-		ClimbControl(driverControl.getRawButton(7), driverControl.getRawButton(8));
-		BallControl(shooterControl.getRawAxis(0), shooterControl.getRawButton(1), shooterControl.getRawButton(3),
+		
+		climbControl(driverControl.getRawButton(7), driverControl.getRawButton(8));
+		ballControl(shooterControl.getRawButton(1), shooterControl.getRawButton(3),
 				shooterControl.getRawButton(6), shooterControl.getRawButton(5),
 				shooterControl.getRawButton(2));
-		// A little code for the assist aim system
 
     }
 
-    /**
-     * Runs during test mode
-     */
     public void test() {
     }
 }
